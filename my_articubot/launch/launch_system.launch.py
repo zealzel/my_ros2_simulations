@@ -19,13 +19,16 @@ def generate_launch_description():
 
     package_name='articubot_one' #<--- CHANGE ME
 
-    # bringup_dir = get_package_share_directory('aws_robomaker_small_warehouse_world')
-    bringup_dir = get_package_share_directory('aws_robomaker_small_house_world')
+    bringup_dir = get_package_share_directory('my_articubot')
+    world_bringup_dir = get_package_share_directory('aws_robomaker_small_house_world')
+
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
-    warehouse_dir = get_package_share_directory('aws_robomaker_small_house_world')
-    world_path=os.path.join(bringup_dir, 'worlds', 'small_house.world')
-    print('world_path', world_path)
+
+    # warehouse_dir = get_package_share_directory('aws_robomaker_small_house_world')
+    world_path=os.path.join(world_bringup_dir, 'worlds', 'small_house.world')
+    # print('world_path', world_path)
+
     rviz_config_file = os.path.join(nav2_bringup_dir, 'rviz', 'nav2_default_view.rviz')
 
     slam = LaunchConfiguration('slam')
@@ -67,6 +70,12 @@ def generate_launch_description():
         default_value='true',
         description='Use simulation (Gazebo) clock if true')
 
+    declare_params_file_cmd = DeclareLaunchArgument(
+        'params_file',
+        # default_value=os.path.join(bringup_dir, 'config', 'nav2_params.yaml'),
+        default_value=os.path.join(bringup_dir, 'config', 'basic_params.yaml'),
+        description='Full path to the ROS2 parameters file to use for all launched nodes')
+
     declare_use_rviz_cmd = DeclareLaunchArgument(
         'use_rviz',
         default_value='True',
@@ -75,7 +84,7 @@ def generate_launch_description():
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
         default_value=os.path.join(
-            warehouse_dir, 'maps', '005', 'map.yaml'),
+            bringup_dir, 'maps', 'articubot_map_house_1.yaml'),
         description='Full path to map file to load')
 
     declare_slam_cmd = DeclareLaunchArgument(
@@ -156,9 +165,10 @@ def generate_launch_description():
         twist_mux,
         declare_world_cmd,
         declare_use_sim_time_cmd,
-        declare_slam_cmd,
-        declare_map_yaml_cmd,
+        declare_params_file_cmd,
         declare_use_rviz_cmd,
+        declare_map_yaml_cmd,
+        declare_slam_cmd,
     ])
 
     ld.add_action(gazebo)
@@ -166,7 +176,6 @@ def generate_launch_description():
     ld.add_action(diff_drive_spawner)
     ld.add_action(joint_broad_spawner)
     ld.add_action(rviz_cmd)
+    ld.add_action(bringup_cmd)
 
     return ld
-
-

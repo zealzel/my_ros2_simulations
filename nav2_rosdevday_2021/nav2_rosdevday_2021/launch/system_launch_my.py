@@ -28,8 +28,10 @@ def generate_launch_description():
     # Get the launch directory
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     bringup_dir = get_package_share_directory('nav2_rosdevday_2021')
-    # robot_model_dir = get_package_share_directory('neo_simulation2')
     robot_model_dir = get_package_share_directory('articubot_one')
+    robot_path = os.path.join(robot_model_dir, 'description', 'robot.urdf.xacro')
+    print("robot_path", robot_path)
+
     warehouse_dir = get_package_share_directory('aws_robomaker_small_warehouse_world')
 
     nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
@@ -92,17 +94,22 @@ def generate_launch_description():
             bringup_dir, 'worlds', 'industrial_sim.world'),
         description='Full path to world model file to load')
 
-    # declare_urdf_cmd = DeclareLaunchArgument(
-    #     'urdf',
-    #     default_value=os.path.join(
-    #         robot_model_dir, 'robots', 'mp_400', 'mp_400.urdf'),
-    #     description='Full path to world model file to load')
-
     declare_urdf_cmd = DeclareLaunchArgument(
         'urdf',
         default_value=os.path.join(
-            robot_model_dir, 'description', 'robot.urdf.xacro'),
+            robot_model_dir, 'robots', 'mp_400', 'mp_400.urdf'),
         description='Full path to world model file to load')
+
+    # 將 .urdf.xacro 轉換成 .urdf
+    output_urdf_path = os.path.join(robot_model_dir, 'description', 'robot.urdf')
+    print("output_urdf_path", output_urdf_path)
+
+    # robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', use_ros2_control, ' sim_mode:=', use_sim_time])
+
+    urdf_xacro_to_urdf_cmd = ExecuteProcess(
+            cmd=["ros2", "run", "xacro", "xacro", robot_path, "-o", output_urdf_path, ' use_ros2_control:=true', ' sim_mode:=true'],
+        output='screen'
+    )
 
     # Specify the actions
     start_gazebo_server_cmd = ExecuteProcess(
@@ -120,7 +127,8 @@ def generate_launch_description():
         package='gazebo_ros',
         executable='spawn_entity.py',
         arguments=['-entity', 'robot',
-                   '-file', urdf,
+                   # '-file', urdf,
+                   '-file', output_urdf_path,
                    '-x', '3.45',
                    '-y', '2.15',
                    '-z', '0.10',
@@ -133,7 +141,8 @@ def generate_launch_description():
         name='robot_state_publisher',
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[urdf])
+        # arguments=[urdf])
+        arguments=[output_urdf_path])
 
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -180,6 +189,19 @@ def generate_launch_description():
     #         emulate_tty=True,
     #         parameters=[params_file])
 
+
+    diff_drive_spawner = Node(
+        package="controller_manager",
+        executable="spawner.py",
+        arguments=["diff_cont"],
+    )
+
+    joint_broad_spawner = Node(
+        package="controller_manager",
+        executable="spawner.py",
+        arguments=["joint_broad"],
+    )
+
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -192,13 +214,19 @@ def generate_launch_description():
     ld.add_action(declare_use_rviz_cmd)
     ld.add_action(declare_simulator_cmd)
     ld.add_action(declare_world_cmd)
+
+    # ld.add_action(urdf_xacro_to_urdf_cmd)
     ld.add_action(declare_urdf_cmd)
+
     ld.add_action(start_gazebo_server_cmd)
     ld.add_action(start_gazebo_client_cmd)
     ld.add_action(spawn_entity_cmd)
     ld.add_action(start_robot_state_publisher_cmd)
     ld.add_action(rviz_cmd)
     ld.add_action(bringup_cmd)
+    ld.add_action(diff_drive_spawner)
+    ld.add_action(joint_broad_spawner)
+
     # UNCOMMENT HERE FOR KEEPOUT DEMO
     # ld.add_action(start_lifecycle_manager_cmd)
     # ld.add_action(start_map_server_cmd)

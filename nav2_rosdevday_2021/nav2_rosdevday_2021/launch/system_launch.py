@@ -28,8 +28,7 @@ def generate_launch_description():
     # Get the launch directory
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     bringup_dir = get_package_share_directory('nav2_rosdevday_2021')
-    # robot_model_dir = get_package_share_directory('neo_simulation2')
-    robot_model_dir = get_package_share_directory('articubot_one')
+    robot_model_dir = get_package_share_directory('neo_simulation2')
     warehouse_dir = get_package_share_directory('aws_robomaker_small_warehouse_world')
 
     nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
@@ -92,16 +91,10 @@ def generate_launch_description():
             bringup_dir, 'worlds', 'industrial_sim.world'),
         description='Full path to world model file to load')
 
-    # declare_urdf_cmd = DeclareLaunchArgument(
-    #     'urdf',
-    #     default_value=os.path.join(
-    #         robot_model_dir, 'robots', 'mp_400', 'mp_400.urdf'),
-    #     description='Full path to world model file to load')
-
     declare_urdf_cmd = DeclareLaunchArgument(
         'urdf',
         default_value=os.path.join(
-            robot_model_dir, 'description', 'robot.urdf.xacro'),
+            robot_model_dir, 'robots', 'mp_400', 'mp_400.urdf'),
         description='Full path to world model file to load')
 
     # Specify the actions
